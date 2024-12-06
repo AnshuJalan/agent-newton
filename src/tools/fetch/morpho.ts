@@ -12,7 +12,7 @@ const client = new ApolloClient({
 
 const GET_VAULTS = gql`
   query GetVaults($chainId: Int!, $assetAddress: String!) {
-    vaults(where: { whitelisted: true, chainId_in: $chainId, assetAddress_in: $assetAddress }) {
+    vaults(where: { whitelisted: true, chainId_in: [$chainId], assetAddress_in: [$assetAddress] }) {
       items {
         address
         symbol
@@ -39,7 +39,7 @@ const fetchMorphoVaults = async () => {
   const result = await client.query({
     query: GET_VAULTS,
     variables: {
-      chaindId: process.env.CHAIN_ID,
+      chainId: parseInt(process.env.CHAIN_ID as string, 10),
       assetAddress: process.env.BASE_USDC_ADDRESS,
     },
   });
