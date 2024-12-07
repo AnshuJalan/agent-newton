@@ -2,6 +2,8 @@ import { CdpAction } from "@coinbase/cdp-agentkit-core";
 import { Wallet, Amount, TransactionStatus } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
 
+import { scaleDownDec } from "../../utils/math";
+
 const APPROVAL_PROMPT =
   "This tools will approve an Ethereum address to transfer arbitrary ERC20 tokens owned by you, on your behalf. It accepts the Ethereum address of the ERC20 token contract, the Ethereum address of the spender who is being allowed to transfer your tokens, and the maximum amount of tokens that the spender can transfer.";
 
@@ -62,7 +64,9 @@ export async function approve(
     const status = receipt.getTransaction().getStatus();
 
     if (status == TransactionStatus.COMPLETE) {
-      return `Approved ${args.spender} to transfer ${args.amount} of the token ${
+      return `Approved ${args.spender} to transfer ${scaleDownDec(
+        args.amount.toString()
+      )} of the token ${
         args.tokenAddress
       } to via transaction hash ${receipt.getTransactionHash()}.`;
     } else {

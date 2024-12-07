@@ -4,11 +4,13 @@ import { CdpAction, CdpActionSchemaAny, CdpAgentkit } from "@coinbase/cdp-agentk
 import { ApprovalAction } from "./approvals";
 import { MorphoInvestAction } from "./morpho-invest";
 import { AaveInvestAction } from "./aave-invest";
+import { MoonwellInvestAction } from "./moonwell-invest";
 
 const CDP_ACTIONS: CdpAction<CdpActionSchemaAny>[] = [
   new ApprovalAction(),
   new MorphoInvestAction(),
   new AaveInvestAction(),
+  new MoonwellInvestAction(),
 ];
 
 export const buildCustomCdpTools = (agentKit: CdpAgentkit) => {

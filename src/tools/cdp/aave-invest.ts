@@ -47,7 +47,7 @@ const supplyAbi = [
 
 async function invest(wallet: Wallet, args: z.infer<typeof AaveInvestInput>): Promise<string> {
   const supplyCall = await wallet.invokeContract({
-    contractAddress: process.env.BASE_AAVE_POOL_ADDRESS as string,
+    contractAddress: process.env.BASE_AAVE_USDC_POOL_ADDRESS as string,
     abi: supplyAbi,
     method: "supply",
     args: {
