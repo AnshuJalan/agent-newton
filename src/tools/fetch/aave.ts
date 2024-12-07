@@ -34,7 +34,7 @@ const GET_RESERVE_QUERY = gql`
 const fetchAaveReserve = async () => {
   const result = await client.query({ query: GET_RESERVE_QUERY });
   return JSON.stringify({
-    liquidityRat: mulDiv(result.data.reserves[0].liquidityRate, 10 ** 27, 100),
+    liquidityRate: mulDiv(result.data.reserves[0].liquidityRate, 100, 1e27),
     availableLiquidity: mulDiv(result.data.reserves[0].availableLiquidity, 1, 1e6),
     totalLiquidity: mulDiv(result.data.reserves[0].totalLiquidity, 1, 1e6),
     utilizationRate: (parseFloat(result.data.reserves[0].utilizationRate) * 100).toString(),

@@ -1,76 +1,36 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import fs from "fs";
-import { CdpAgentkit } from "@coinbase/cdp-agentkit-core";
-import { CdpToolkit } from "@coinbase/cdp-langchain";
-import { ChatOpenAI } from "@langchain/openai";
-import { HumanMessage } from "@langchain/core/messages";
-import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
-import { fetchTools } from "./tools/fetch";
-import { buildCustomCdpTools } from "./tools/cdp";
+import { getApp } from "./workflow";
 import { validateEnvironment } from "./utils/validations";
 
 validateEnvironment();
 
-const WALLET_DATA_FILE = "wallet_data.txt";
-
-const initializeAgent = async () => {
-  try {
-    const llm = new ChatOpenAI({
-      model: "gpt-4o-mini",
-    });
-
-    let walletDataStr: string | null = null;
-
-    if (fs.existsSync(WALLET_DATA_FILE)) {
-      try {
-        walletDataStr = fs.readFileSync(WALLET_DATA_FILE, "utf8");
-      } catch (error) {
-        console.error("Error reading wallet data:", error);
-      }
-    }
-
-    const config = {
-      cdpWalletData: walletDataStr || undefined,
-      networkId: process.env.NETWORK_ID || "base-sepolia",
-    };
-
-    const agentkit = await CdpAgentkit.configureWithWallet(config);
-
-    const cdpToolkit = new CdpToolkit(agentkit);
-    const cdpDefaultTools = cdpToolkit.getTools();
-
-    const tools = [...buildCustomCdpTools(agentkit), ...cdpDefaultTools, ...fetchTools];
-
-    const agent = createReactAgent({
-      llm,
-      tools,
-      messageModifier: `You are a Defi broker agent who provides information and/or invests the money provided by the user to you into the defi protocols that provide the best returns and also satisfies any requests given to you by the user. Currently supported protocols:
-          - Morpho
-          - Aave`,
-    });
-
-    // Save wallet data
-    const exportedWallet = await agentkit.exportWallet();
-    fs.writeFileSync(WALLET_DATA_FILE, exportedWallet);
-
-    return agent;
-  } catch (error) {
-    console.error("Failed to initialize agent:", error);
-    throw error;
-  }
-};
+const SYSTEM_PROMPT = `
+  You are a professional Decentralised Finance hedge fund broker and your job is to invest     user's USDC into various Defi protocols on Base Network. USDC on Base network is at ERC20 address ${process.env.BASE_USDC_ADDRESS}. You must make investments that are safe and give good APY to the user. Diversify your investments and choose an optimal distribution that gives a high APY yet does not overly distribute the funds. As an expert, you may use other tried and tested reasoning patterns when choosing where to invest the user's USDC.
+  The defi protocols you can use are:
+  1. Morpho vaults
+  2. Aave reserves
+  You have been given tools that you can use to fetch APY data from these defi protocols and execute the investments
+  `;
 
 (async () => {
-  const agent = await initializeAgent();
-  const result = await agent.invoke({
-    messages: [
-      new HumanMessage(
-        "Fund my wallet and then approve 0x4ba6cc4e80806FE8FBCFA1D768B1B5b1a3a20832 to spend 1000 of my tokens at ERC20 address 0x13e5fb0b6534bb22cbc59fae339dbbe0dc906871"
-      ),
-    ],
-  });
-  console.log(result.messages[result.messages.length - 1].content);
+  const app = await getApp();
+
+  const stream = await app.stream(
+    {
+      messages: [new SystemMessage(SYSTEM_PROMPT), new HumanMessage("Invest my 1 USDC")],
+    },
+    { configurable: { thread_id: "main" } }
+  );
+  for await (const chunk of stream) {
+    if ("agent" in chunk) {
+      console.log(chunk.agent.messages);
+    } else if ("tools" in chunk) {
+      console.log(chunk.tools.messages);
+    }
+    console.log("---------");
+  }
 })();

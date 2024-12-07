@@ -10,7 +10,9 @@ const ApprovalInput = z
     tokenAddress: z.string().describe("The Ethereum address of the ERC20 token contract"),
     amount: z
       .custom<Amount>()
-      .describe("The maximum amount of tokens that the spender can transfer"),
+      .describe(
+        "The maximum amount of tokens that the spender can transfer. The amount is scaled to the decimals of the token. For example, if the decimals is 6, then the amount is scaled as amount * 1e6"
+      ),
     spender: z
       .string()
       .describe("The Ethereum address of the spender who is being allowed to transfer your tokens"),
@@ -60,19 +62,19 @@ export async function approve(
     const status = receipt.getTransaction().getStatus();
 
     if (status == TransactionStatus.COMPLETE) {
-      return `Approved ${args.tokenAddress} to transfer ${args.amount} tokens to ${
-        args.spender
-      } via transaction hash ${receipt.getTransactionHash()}.`;
+      return `Approved ${args.spender} to transfer ${args.amount} of the token ${
+        args.tokenAddress
+      } to via transaction hash ${receipt.getTransactionHash()}.`;
     } else {
       return `Approval failed.`;
     }
   } catch (err: any) {
-    return err.message;
+    return "Error: approval failed.";
   }
 }
 
 export class ApprovalAction implements CdpAction<typeof ApprovalInput> {
-  public name = "approve";
+  public name = "approval";
   public description = APPROVAL_PROMPT;
   public argsSchema = ApprovalInput;
   public func = approve;

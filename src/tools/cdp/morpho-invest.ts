@@ -8,7 +8,11 @@ const MORPHO_INVEST_PROMPT =
 const MorphoInvestInput = z
   .object({
     vaultAddress: z.string().describe("The Ethereum address of the vault to deposit USDC into"),
-    assets: z.custom<Amount>().describe("The amount of USDC to deposit into the vault"),
+    assets: z
+      .custom<Amount>()
+      .describe(
+        "The amount of USDC to deposit into the vault. The amount is scaled to the decimals of the token asset. For example, if the decimals is 6, then the amount is scaled as amount * 1e6"
+      ),
     receiver: z.string().describe("The Ethereum address of the receiver for the deposit"),
   })
   .strip()
@@ -43,18 +47,18 @@ async function invest(wallet: Wallet, args: z.infer<typeof MorphoInvestInput>): 
     contractAddress: args.vaultAddress,
     abi: depositAbi,
     method: "deposit",
-    args: { assets: args.assets, receiver: args.receiver },
+    args: { assets: args.assets.toString(), receiver: args.receiver },
   });
 
   const receipt = await depositCall.wait();
   const status = receipt.getTransaction().getStatus();
 
   if (status == TransactionStatus.COMPLETE) {
-    return `Successfully deposited ${args.assets} USDC into vault ${
+    return `Successfully deposited ${args.assets} USDC into morpho vault ${
       args.vaultAddress
     } for receiver ${args.receiver} via transaction hash ${receipt.getTransactionHash()}.`;
   } else {
-    return `Deposit failed.`;
+    return `Error: deposit failed.`;
   }
 }
 
