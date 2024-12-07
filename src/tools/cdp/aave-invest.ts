@@ -3,6 +3,7 @@ import { Wallet, Amount, TransactionStatus } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
 
 import { scaleDownDec } from "../../utils/math";
+import { updateMemoryKey } from "../../utils/memory";
 
 const AAVE_INVEST_PROMPT =
   "This tool allows you to invest USDC into an Aave reserve. It accepts the amount of USDC to invest as input. This tool must be preceded by a call to the `approve` tool to allow the pool reserve contract to spend the required amount of USDC on your behalf.";
@@ -47,14 +48,16 @@ const supplyAbi = [
 
 async function invest(wallet: Wallet, args: z.infer<typeof AaveInvestInput>): Promise<string> {
   try {
+    const self = await wallet.getDefaultAddress();
+
     const supplyCall = await wallet.invokeContract({
-      contractAddress: process.env.BASE_AAVE_USDC_POOL_ADDRESS as string,
+      contractAddress: process.env.BASE_AAVE_POOL_ADDRESS as string,
       abi: supplyAbi,
       method: "supply",
       args: {
         asset: process.env.BASE_USDC_ADDRESS as string,
         amount: args.amount.toString(),
-        onBehalfOf: wallet.getDefaultAddress(),
+        onBehalfOf: self.getId(),
         referralCode: "0",
       },
     });
@@ -63,6 +66,8 @@ async function invest(wallet: Wallet, args: z.infer<typeof AaveInvestInput>): Pr
     const status = receipt.getTransaction().getStatus();
 
     if (status == TransactionStatus.COMPLETE) {
+      updateMemoryKey("aaveReserves", "add", process.env.BASE_AAVE_POOL_ADDRESS as string);
+
       return `Successfully deposited ${scaleDownDec(
         args.amount.toString()
       )} USDC into Aave pool reserve via transaction hash ${receipt.getTransactionHash()}.`;

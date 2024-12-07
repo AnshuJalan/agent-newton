@@ -3,6 +3,7 @@ import { Wallet, Amount, TransactionStatus } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
 
 import { scaleDownDec } from "../../utils/math";
+import { updateMemoryKey } from "../../utils/memory";
 
 const MORPHO_INVEST_PROMPT =
   "This tool allows you to invest USDC into a Morpho vault. It accepts the vault's Ethereum address, the amount of USDC to deposit, and the receiver's Ethereum address. This tool must be preceded by a call to the `approve` tool to allow the vault contract to spend the required amount of USDC on your behalf.";
@@ -15,7 +16,6 @@ const MorphoInvestInput = z
       .describe(
         "The amount of USDC to deposit into the vault. The amount is scaled to the decimals of the token asset. For example, if the decimals is 6, then the amount is scaled as amount * 1e6"
       ),
-    receiver: z.string().describe("The Ethereum address of the receiver for the deposit"),
   })
   .strip()
   .describe("Instructions for depositing USDC into a Morpho vault");
@@ -46,22 +46,26 @@ const depositAbi = [
 
 async function invest(wallet: Wallet, args: z.infer<typeof MorphoInvestInput>): Promise<string> {
   try {
+    const receiver = await wallet.getDefaultAddress();
+
     const depositCall = await wallet.invokeContract({
       contractAddress: args.vaultAddress,
       abi: depositAbi,
       method: "deposit",
-      args: { assets: args.assets.toString(), receiver: args.receiver },
+      args: { assets: args.assets.toString(), receiver: receiver.getId() },
     });
 
     const receipt = await depositCall.wait();
     const status = receipt.getTransaction().getStatus();
 
     if (status == TransactionStatus.COMPLETE) {
+      updateMemoryKey("morphoVaults", "add", args.vaultAddress);
+
       return `Successfully deposited ${scaleDownDec(
         args.assets.toString()
-      )} USDC into morpho vault ${args.vaultAddress} for receiver ${
-        args.receiver
-      } via transaction hash ${receipt.getTransactionHash()}.`;
+      )} USDC into morpho vault ${
+        args.vaultAddress
+      } for receiver ${receiver.getId()} via transaction hash ${receipt.getTransactionHash()}.`;
     } else {
       return `Error: deposit failed.`;
     }

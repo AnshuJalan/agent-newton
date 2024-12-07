@@ -35,6 +35,7 @@ const fetchAaveReserve = async () => {
   try {
     const result = await client.query({ query: GET_RESERVE_QUERY });
     return JSON.stringify({
+      reserve: process.env.BASE_AAVE_POOL_ADDRESS as string,
       liquidityRate: mulDiv(result.data.reserves[0].liquidityRate, 100, 1e27),
       availableLiquidity: mulDiv(result.data.reserves[0].availableLiquidity, 1, 1e6),
       totalLiquidity: mulDiv(result.data.reserves[0].totalLiquidity, 1, 1e6),

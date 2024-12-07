@@ -3,6 +3,7 @@ import { Wallet, Amount, TransactionStatus } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
 
 import { scaleDownDec } from "../../utils/math";
+import { updateMemoryKey } from "../../utils/memory";
 
 const MOONWELL_INVEST_PROMPT =
   "This tool allows you to invest USDC into a Moonwell market. It accepts the amount of USDC to invest as input. This tool must be preceded by a call to the `approve` tool to allow the market contract to spend the required amount of USDC on your behalf.";
@@ -53,6 +54,12 @@ async function invest(wallet: Wallet, args: z.infer<typeof MoonwellInvestInput>)
     const status = receipt.getTransaction().getStatus();
 
     if (status == TransactionStatus.COMPLETE) {
+      updateMemoryKey(
+        "moonwellMarkets",
+        "add",
+        process.env.BASE_MOONWELL_USDC_MARKET_ADDRESS as string
+      );
+
       return `Successfully deposited ${scaleDownDec(
         args.amount.toString()
       )} USDC into Moonwell market via transaction hash ${receipt.getTransactionHash()}.`;
