@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
+import chalk from "chalk";
 import * as readline from "readline";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
@@ -57,6 +58,7 @@ const rl = readline.createInterface({
 });
 
 const promptUserChoice = async () => {
+  console.log(chalk.blueBright("[You are on Base Mainnet 🟢]"));
   rl.question(
     "Choose an option:\n1. Ask your agent to withdraw your investments\n2. Run agent in autonomous fund manager mode\nEnter 1 or 2: ",
     async (mode: string) => {
