@@ -36,21 +36,26 @@ const GET_VAULTS = gql`
 `;
 
 const fetchMorphoVaults = async () => {
-  const result = await client.query({
-    query: GET_VAULTS,
-    variables: {
-      chainId: parseInt(process.env.CHAIN_ID as string, 10),
-      assetAddress: process.env.BASE_USDC_ADDRESS,
-    },
-  });
-  return JSON.stringify(
-    result.data.vaults.items.map((vault: any) => {
-      return {
-        ...vault,
-        state: { ...vault.state, totalAssets: vault.state.totalAssets.toString() },
-      };
-    })
-  );
+  try {
+    const result = await client.query({
+      query: GET_VAULTS,
+      variables: {
+        chainId: parseInt(process.env.CHAIN_ID as string, 10),
+        assetAddress: process.env.BASE_USDC_ADDRESS,
+      },
+    });
+    return JSON.stringify(
+      result.data.vaults.items.map((vault: any) => {
+        return {
+          ...vault,
+          state: { ...vault.state, totalAssets: vault.state.totalAssets.toString() },
+        };
+      })
+    );
+  } catch (err: any) {
+    console.error(err);
+    return "Error: fetch failed.";
+  }
 };
 
 export const morphoVaultsFetchTool = tool(fetchMorphoVaults, {

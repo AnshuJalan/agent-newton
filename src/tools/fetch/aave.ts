@@ -32,14 +32,19 @@ const GET_RESERVE_QUERY = gql`
 `;
 
 const fetchAaveReserve = async () => {
-  const result = await client.query({ query: GET_RESERVE_QUERY });
-  return JSON.stringify({
-    liquidityRate: mulDiv(result.data.reserves[0].liquidityRate, 100, 1e27),
-    availableLiquidity: mulDiv(result.data.reserves[0].availableLiquidity, 1, 1e6),
-    totalLiquidity: mulDiv(result.data.reserves[0].totalLiquidity, 1, 1e6),
-    utilizationRate: (parseFloat(result.data.reserves[0].utilizationRate) * 100).toString(),
-    reserveFactor: result.data.reserves[0].reserveFactor,
-  });
+  try {
+    const result = await client.query({ query: GET_RESERVE_QUERY });
+    return JSON.stringify({
+      liquidityRate: mulDiv(result.data.reserves[0].liquidityRate, 100, 1e27),
+      availableLiquidity: mulDiv(result.data.reserves[0].availableLiquidity, 1, 1e6),
+      totalLiquidity: mulDiv(result.data.reserves[0].totalLiquidity, 1, 1e6),
+      utilizationRate: (parseFloat(result.data.reserves[0].utilizationRate) * 100).toString(),
+      reserveFactor: result.data.reserves[0].reserveFactor,
+    });
+  } catch (err: any) {
+    console.error(err);
+    return "Error: fetch failed.";
+  }
 };
 
 export const aaveReserveFetchTool = tool(fetchAaveReserve, {

@@ -45,22 +45,29 @@ const depositAbi = [
 ];
 
 async function invest(wallet: Wallet, args: z.infer<typeof MorphoInvestInput>): Promise<string> {
-  const depositCall = await wallet.invokeContract({
-    contractAddress: args.vaultAddress,
-    abi: depositAbi,
-    method: "deposit",
-    args: { assets: args.assets.toString(), receiver: args.receiver },
-  });
+  try {
+    const depositCall = await wallet.invokeContract({
+      contractAddress: args.vaultAddress,
+      abi: depositAbi,
+      method: "deposit",
+      args: { assets: args.assets.toString(), receiver: args.receiver },
+    });
 
-  const receipt = await depositCall.wait();
-  const status = receipt.getTransaction().getStatus();
+    const receipt = await depositCall.wait();
+    const status = receipt.getTransaction().getStatus();
 
-  if (status == TransactionStatus.COMPLETE) {
-    return `Successfully deposited ${scaleDownDec(args.assets.toString())} USDC into morpho vault ${
-      args.vaultAddress
-    } for receiver ${args.receiver} via transaction hash ${receipt.getTransactionHash()}.`;
-  } else {
-    return `Error: deposit failed.`;
+    if (status == TransactionStatus.COMPLETE) {
+      return `Successfully deposited ${scaleDownDec(
+        args.assets.toString()
+      )} USDC into morpho vault ${args.vaultAddress} for receiver ${
+        args.receiver
+      } via transaction hash ${receipt.getTransactionHash()}.`;
+    } else {
+      return `Error: deposit failed.`;
+    }
+  } catch (err: any) {
+    console.error(err);
+    return "Error: deposit failed.";
   }
 }
 

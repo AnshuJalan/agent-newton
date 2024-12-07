@@ -73,6 +73,7 @@ export async function approve(
       return `Approval failed.`;
     }
   } catch (err: any) {
+    console.error(err);
     return "Error: approval failed.";
   }
 }

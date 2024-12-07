@@ -19,19 +19,24 @@ const moonwellClient = createMoonwellClient({
 });
 
 const fetchMoonwellMarket = async () => {
-  const result = await moonwellClient.getMarket({
-    // @ts-ignore
-    marketAddress: process.env.BASE_MOONWELL_USDC_MARKET_ADDRESS as string,
-    chainId: parseInt(process.env.CHAIN_ID as string, 10),
-  });
+  try {
+    const result = await moonwellClient.getMarket({
+      // @ts-ignore
+      marketAddress: process.env.BASE_MOONWELL_USDC_MARKET_ADDRESS as string,
+      chainId: parseInt(process.env.CHAIN_ID as string, 10),
+    });
 
-  return JSON.stringify({
-    marketAddress: process.env.BASE_MOONWELL_USDC_MARKET_ADDRESS as string,
-    supplyUSD: result?.totalSupplyUsd,
-    borrowsUSD: result?.totalBorrowsUsd,
-    apy: result?.baseSupplyApy,
-    reserveFactor: result?.reserveFactor,
-  });
+    return JSON.stringify({
+      marketAddress: process.env.BASE_MOONWELL_USDC_MARKET_ADDRESS as string,
+      supplyUSD: result?.totalSupplyUsd,
+      borrowsUSD: result?.totalBorrowsUsd,
+      apy: result?.baseSupplyApy,
+      reserveFactor: result?.reserveFactor,
+    });
+  } catch (err: any) {
+    console.error(err);
+    return "Error: fetch failed.";
+  }
 };
 
 export const moonwellMarketFetchTool = tool(fetchMoonwellMarket, {

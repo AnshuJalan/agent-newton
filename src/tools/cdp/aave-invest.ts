@@ -46,27 +46,32 @@ const supplyAbi = [
 ];
 
 async function invest(wallet: Wallet, args: z.infer<typeof AaveInvestInput>): Promise<string> {
-  const supplyCall = await wallet.invokeContract({
-    contractAddress: process.env.BASE_AAVE_USDC_POOL_ADDRESS as string,
-    abi: supplyAbi,
-    method: "supply",
-    args: {
-      asset: process.env.BASE_USDC_ADDRESS as string,
-      amount: args.amount.toString(),
-      onBehalfOf: wallet.getDefaultAddress(),
-      referralCode: "0",
-    },
-  });
+  try {
+    const supplyCall = await wallet.invokeContract({
+      contractAddress: process.env.BASE_AAVE_USDC_POOL_ADDRESS as string,
+      abi: supplyAbi,
+      method: "supply",
+      args: {
+        asset: process.env.BASE_USDC_ADDRESS as string,
+        amount: args.amount.toString(),
+        onBehalfOf: wallet.getDefaultAddress(),
+        referralCode: "0",
+      },
+    });
 
-  const receipt = await supplyCall.wait();
-  const status = receipt.getTransaction().getStatus();
+    const receipt = await supplyCall.wait();
+    const status = receipt.getTransaction().getStatus();
 
-  if (status == TransactionStatus.COMPLETE) {
-    return `Successfully deposited ${scaleDownDec(
-      args.amount.toString()
-    )} USDC into Aave pool reserve via transaction hash ${receipt.getTransactionHash()}.`;
-  } else {
-    return `Error: supply failed.`;
+    if (status == TransactionStatus.COMPLETE) {
+      return `Successfully deposited ${scaleDownDec(
+        args.amount.toString()
+      )} USDC into Aave pool reserve via transaction hash ${receipt.getTransactionHash()}.`;
+    } else {
+      return `Error: supply failed.`;
+    }
+  } catch (err: any) {
+    console.error(err);
+    return "Error: supply failed.";
   }
 }
 

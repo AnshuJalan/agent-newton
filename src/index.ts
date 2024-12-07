@@ -1,10 +1,10 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import chalk from "chalk";
 import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
 import { getApp } from "./workflow";
+import { printChunk } from "./utils/printChunk";
 import { validateEnvironment } from "./utils/validations";
 
 validateEnvironment();
@@ -36,20 +36,7 @@ const SYSTEM_PROMPT = `
       { configurable: { thread_id: "main" } }
     );
     for await (const chunk of stream) {
-      if ("agent" in chunk && chunk.agent.messages[0].content.length > 0) {
-        console.log(chalk.green(`> [agent]: ${chunk.agent.messages[0].content}`));
-      } else if ("tools" in chunk && chunk.tools.messages[0].content.length > 0) {
-        const toolMessage = chunk.tools.messages[0];
-        console.log(
-          chalk.yellow(
-            `> [tool (${toolMessage.name})]: ${
-              toolMessage.name.includes("_fetch")
-                ? "__Fetched data too large to be shown__"
-                : toolMessage.content
-            }`
-          )
-        );
-      }
+      printChunk(chunk);
     }
 
     await new Promise((resolve) => setTimeout(resolve, 20000));
