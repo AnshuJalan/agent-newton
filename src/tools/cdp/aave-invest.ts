@@ -2,8 +2,10 @@ import { CdpAction } from "@coinbase/cdp-agentkit-core";
 import { Wallet, Amount, TransactionStatus } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
 
+import { scaleDownDec } from "../../utils/math";
+
 const AAVE_INVEST_PROMPT =
-  "This tool allows you to invest USDC into an Aave pool reserve. It accepts the amount of USDC to invest as input. This tool must be preceded by a call to the `approve` tool to allow the pool reserve contract to spend the required amount of USDC on your behalf.";
+  "This tool allows you to invest USDC into an Aave reserve. It accepts the amount of USDC to invest as input. This tool must be preceded by a call to the `approve` tool to allow the pool reserve contract to spend the required amount of USDC on your behalf.";
 
 const AaveInvestInput = z
   .object({
@@ -60,9 +62,9 @@ async function invest(wallet: Wallet, args: z.infer<typeof AaveInvestInput>): Pr
   const status = receipt.getTransaction().getStatus();
 
   if (status == TransactionStatus.COMPLETE) {
-    return `Successfully deposited ${
-      args.amount
-    } USDC into Aave pool reserve via transaction hash ${receipt.getTransactionHash()}.`;
+    return `Successfully deposited ${scaleDownDec(
+      args.amount.toString()
+    )} USDC into Aave pool reserve via transaction hash ${receipt.getTransactionHash()}.`;
   } else {
     return `Error: supply failed.`;
   }

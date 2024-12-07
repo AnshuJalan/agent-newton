@@ -2,6 +2,8 @@ import { CdpAction } from "@coinbase/cdp-agentkit-core";
 import { Wallet, Amount, TransactionStatus } from "@coinbase/coinbase-sdk";
 import { z } from "zod";
 
+import { scaleDownDec } from "../../utils/math";
+
 const MORPHO_INVEST_PROMPT =
   "This tool allows you to invest USDC into a Morpho vault. It accepts the vault's Ethereum address, the amount of USDC to deposit, and the receiver's Ethereum address. This tool must be preceded by a call to the `approve` tool to allow the vault contract to spend the required amount of USDC on your behalf.";
 
@@ -54,7 +56,7 @@ async function invest(wallet: Wallet, args: z.infer<typeof MorphoInvestInput>): 
   const status = receipt.getTransaction().getStatus();
 
   if (status == TransactionStatus.COMPLETE) {
-    return `Successfully deposited ${args.assets} USDC into morpho vault ${
+    return `Successfully deposited ${scaleDownDec(args.assets.toString())} USDC into morpho vault ${
       args.vaultAddress
     } for receiver ${args.receiver} via transaction hash ${receipt.getTransactionHash()}.`;
   } else {

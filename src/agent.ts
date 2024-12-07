@@ -34,7 +34,7 @@ export const initializeAgentWithTools = async () => {
     const tools = [...buildCustomCdpTools(agentkit), ...cdpDefaultTools, ...fetchTools];
 
     const agent = new ChatOpenAI({
-      model: "gpt-4o-mini",
+      model: "gpt-4o",
       temperature: 0,
     }).bindTools(tools, { parallel_tool_calls: false });
 

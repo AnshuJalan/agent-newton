@@ -1,4 +1,4 @@
-import { AIMessage, BaseMessage } from "@langchain/core/messages";
+import { AIMessage, BaseMessage, SystemMessage } from "@langchain/core/messages";
 import { Annotation, MemorySaver, messagesStateReducer, StateGraph } from "@langchain/langgraph";
 import { ToolNode } from "@langchain/langgraph/prebuilt";
 
@@ -19,7 +19,7 @@ const callModel = async (state: typeof StateAnnotation.State) => {
   return { messages: [response] };
 };
 
-const shouldContinue = async (state: typeof StateAnnotation.State) => {
+const callToolOrWait = async (state: typeof StateAnnotation.State) => {
   const messages = state.messages;
   const lastMessage = messages[messages.length - 1];
 
@@ -33,13 +33,14 @@ const shouldContinue = async (state: typeof StateAnnotation.State) => {
 export const getApp = async () => {
   const initAgent = await initializeAgentWithTools();
 
+  agent = initAgent.agent;
   const toolNode = new ToolNode(initAgent.tools);
 
   const workflow = new StateGraph(StateAnnotation)
     .addNode("agent", callModel)
     .addNode("tools", toolNode)
     .addEdge("__start__", "agent")
-    .addConditionalEdges("agent", shouldContinue, ["tools", "__end__"])
+    .addConditionalEdges("agent", callToolOrWait, ["tools", "__end__"])
     .addEdge("tools", "agent");
 
   const checkpointer = new MemorySaver();
