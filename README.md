@@ -3,7 +3,7 @@
 An autonomous AI agent operating as your DeFi Fund Manager, capable of developing and executing investment plans for you on the fly! **Built for EthIndia 2024**
 
 > [!NOTE]
-> BLS signature checks have been commented out for this POC.
+> This agent works on Defi protocols deployed on **Base Mainnet**
 
 ## The Problem it Solves
 
