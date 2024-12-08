@@ -91,9 +91,6 @@ const rl = readline.createInterface({
 
 const promptUserChoice = async () => {
   console.log(chalk.blueBright("[You are on Base Mainnet 🟢]"));
-  console.log(
-    chalk.red("[Hey! I'm Agent Newton, your autonomous Defi fund manager. Let's start!]")
-  );
   rl.question(
     "Choose an option:\n1. Ask your agent to withdraw your investments\n2. Run agent in autonomous fund manager mode\nEnter 1 or 2: ",
     async (mode: string) => {

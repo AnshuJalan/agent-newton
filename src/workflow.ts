@@ -14,7 +14,7 @@ let agent: any;
 
 const callModel = async (state: typeof StateAnnotation.State) => {
   const messages = state.messages;
-  const response = await agent.invoke(messages);
+  const response = await agent.invoke(messages, { recursion_limit: 100 });
 
   return { messages: [response] };
 };
