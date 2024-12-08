@@ -7,8 +7,8 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
 import { getApp } from "./workflow";
 import { printChunk } from "./utils/printChunk";
-import { ensureMemoryFileExists, readMemoryFile } from "./utils/memory";
 import { validateEnvironment } from "./utils/validations";
+import { ensureMemoryFileExists, readMemoryFile } from "./utils/memory";
 
 validateEnvironment();
 ensureMemoryFileExists();
@@ -25,7 +25,12 @@ const SYSTEM_PROMPT = `
   The user may also ask you to wihdraw USDC from any of the defi protocols that you have invested in. When the user requests withdrawals, you do not make any investments and use the tools to send the withdrawal transaction for requested wihdrawals.
   `;
 
-const run = async (mode: string) => {
+enum Mode {
+  WITHDRAWALS = "1",
+  AUTONOMOUS = "2",
+}
+
+const run = async (mode: Mode) => {
   const app = await getApp();
 
   while (true) {
@@ -36,7 +41,9 @@ const run = async (mode: string) => {
         messages: [
           new SystemMessage(SYSTEM_PROMPT),
           new HumanMessage(
-            mode == "1" ? `Please execute the following withdrawals: ${withdrawalsRequired}` : ""
+            mode == Mode.WITHDRAWALS
+              ? `Please execute the following withdrawals: ${withdrawalsRequired}`
+              : ""
           ),
         ],
       },
@@ -46,7 +53,7 @@ const run = async (mode: string) => {
       printChunk(chunk);
     }
 
-    if (mode === "1") break;
+    if (mode === Mode.WITHDRAWALS) break;
 
     await new Promise((resolve) => setTimeout(resolve, 20000));
   }
@@ -62,8 +69,8 @@ const promptUserChoice = async () => {
   rl.question(
     "Choose an option:\n1. Ask your agent to withdraw your investments\n2. Run agent in autonomous fund manager mode\nEnter 1 or 2: ",
     async (mode: string) => {
-      if (mode === "1" || mode === "2") {
-        await run(mode);
+      if (Object.values(Mode).includes(mode as Mode)) {
+        await run(mode as Mode);
       } else {
         console.log("Invalid choice. Please enter 1 or 2.");
         await promptUserChoice();
